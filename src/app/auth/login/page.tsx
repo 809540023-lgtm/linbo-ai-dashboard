@@ -5,11 +5,21 @@ import { createClient } from '@/lib/supabase/client'
 export default function LoginPage() {
   const supabase = createClient()
   const [tab, setTab] = useState<'google' | 'phone'>('google')
-  const [phone, setPhone] = useState('')
+  const [phone, setPhone] = useState('+886')
   const [code, setCode] = useState('')
   const [step, setStep] = useState<'phone' | 'code'>('phone')
   const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // 自動把台灣本地號 09xxxxxxxx 轉成 +8869xxxxxxxx
+  function normalizePhone(input: string): string {
+    let v = input.trim().replace(/[\s-()]/g, '')
+    if (!v) return ''
+    if (v.startsWith('0')) v = '+886' + v.slice(1)
+    else if (v.startsWith('886')) v = '+' + v
+    else if (!v.startsWith('+')) v = '+886' + v
+    return v
+  }
 
   async function loginWithGoogle() {
     setLoading(true)
@@ -21,16 +31,21 @@ export default function LoginPage() {
 
   async function sendCode() {
     setLoading(true); setMsg('')
-    // 用 Supabase 內建 Phone OTP（也可改呼叫 /api/phone-verify 走 Twilio）
-    const { error } = await supabase.auth.signInWithOtp({ phone })
+    const normalized = normalizePhone(phone)
+    if (!/^\+886\d{9}$/.test(normalized)) {
+      setMsg('手機格式錯誤，請用 09xx-xxx-xxx 或 +886-9xx-xxx-xxx')
+      setLoading(false); return
+    }
+    setPhone(normalized)
+    const { error } = await supabase.auth.signInWithOtp({ phone: normalized })
     setLoading(false)
     if (error) { setMsg(error.message); return }
-    setStep('code'); setMsg('驗證碼已寄出')
+    setStep('code'); setMsg('驗證碼已寄出到 ' + normalized)
   }
 
   async function verifyCode() {
     setLoading(true); setMsg('')
-    const { error } = await supabase.auth.verifyOtp({ phone, token: code, type: 'sms' })
+    const { error } = await supabase.auth.verifyOtp({ phone: normalizePhone(phone), token: code, type: 'sms' })
     setLoading(false)
     if (error) { setMsg(error.message); return }
     location.href = '/dashboard'
@@ -65,13 +80,18 @@ export default function LoginPage() {
         <div className="space-y-3">
           {step === 'phone' ? (
             <>
-              <input
-                type="tel"
-                placeholder="+886912345678"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                className="w-full rounded-lg border border-zinc-300 px-4 py-3"
-              />
+              <div className="flex w-full rounded-lg border border-zinc-300 overflow-hidden">
+                <span className="bg-zinc-100 px-3 py-3 text-sm text-zinc-600 select-none">🇹🇼 +886</span>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="912345678 或 0912345678"
+                  value={phone.replace(/^\+886/, '')}
+                  onChange={e => setPhone('+886' + e.target.value.replace(/\D/g, ''))}
+                  className="flex-1 px-3 py-3 outline-none"
+                />
+              </div>
+              <p className="text-xs text-zinc-500">輸入您的手機號碼（不含開頭的 0 也可以）</p>
               <button
                 onClick={sendCode}
                 disabled={loading || !phone}
