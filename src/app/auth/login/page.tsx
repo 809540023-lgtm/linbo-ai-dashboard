@@ -103,9 +103,12 @@ export default function LoginPage() {
               <input
                 type="text"
                 inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
+                maxLength={6}
                 placeholder="6 位數驗證碼"
                 value={code}
-                onChange={e => setCode(e.target.value)}
+                onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 className="w-full rounded-lg border border-zinc-300 px-4 py-3 text-center text-2xl tracking-widest"
               />
               <button
