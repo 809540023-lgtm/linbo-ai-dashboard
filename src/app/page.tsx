@@ -1,66 +1,94 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 
 export default async function HomePage() {
-  const supabase = createClient()
-  const { data: events } = await supabase
+  const admin = createAdminClient()
+  const { data: events } = await admin
     .from('events')
     .select('*')
-    .eq('status', 'upcoming')
     .order('start_at', { ascending: true })
     .limit(3)
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <div className="space-y-6">
-        <p className="text-sm font-medium text-amber-600">AI 台股智慧座談會</p>
+        <p className="text-sm font-medium text-amber-600">群眾智慧 × AI 共創座談會</p>
         <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-          林博的獨立思維<br />
-          <span className="text-amber-600">尋找最快掉落的那顆星星</span>
+          一起找出那顆<br />
+          <span className="text-amber-600">會墜落的星</span>
         </h1>
         <p className="text-lg leading-relaxed text-zinc-700">
-          台股高檔時，我們不追逐最會漲的股票；而是運用 AI 與獨立判斷，揪出最可能快速轉弱的標的。
+          不是報明牌、不是選股課。<br />
+          把<strong>每個人腦中的零碎觀察</strong>匯集起來，
+          由 <strong>AI 即時整合</strong>，
+          讓大家一起發現市場上正在悄悄轉弱的訊號。
         </p>
         <div className="flex flex-wrap gap-3">
           <Link href="/auth/login" className="rounded-lg bg-zinc-900 px-6 py-3 font-medium text-white hover:bg-zinc-800">
-            立即報名
+            立即報名（免費）
           </Link>
           <Link href="/demo" className="rounded-lg bg-amber-500 px-6 py-3 font-medium text-white hover:bg-amber-600">
-            🎬 看離線示範
-          </Link>
-          <Link href="#about" className="rounded-lg border border-zinc-300 px-6 py-3 font-medium hover:bg-zinc-100">
-            了解更多
+            🎬 看活動現場示範
           </Link>
         </div>
       </div>
 
+      {/* 3 步驟說明 — AI 小白友善 */}
+      <section className="mt-12 rounded-2xl bg-zinc-50 p-6">
+        <h2 className="text-xl font-bold">現場您只要做 3 件事</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg bg-white p-4">
+            <div className="text-2xl">📱</div>
+            <p className="mt-2 font-semibold">1. 打開直播</p>
+            <p className="mt-1 text-sm text-zinc-600">手機網頁看主持人</p>
+          </div>
+          <div className="rounded-lg bg-white p-4">
+            <div className="text-2xl">💬</div>
+            <p className="mt-2 font-semibold">2. 分享觀察</p>
+            <p className="mt-1 text-sm text-zinc-600">一句話送出您的想法</p>
+          </div>
+          <div className="rounded-lg bg-white p-4">
+            <div className="text-2xl">📉</div>
+            <p className="mt-2 font-semibold">3. 看 AI 整合</p>
+            <p className="mt-1 text-sm text-zinc-600">即時排行 + 群眾共識</p>
+          </div>
+        </div>
+        <p className="mt-4 text-sm text-zinc-600">
+          完全不懂 AI、不懂股票分析都沒關係——背後 15 個 AI 機器人會做困難的工作。
+        </p>
+      </section>
+
       {events && events.length > 0 && (
-        <section className="mt-16">
+        <section className="mt-12">
           <h2 className="mb-4 text-xl font-semibold">近期場次</h2>
           <div className="space-y-3">
             {events.map(e => (
               <Link
                 key={e.id}
                 href={`/events/${e.id}`}
-                className="block rounded-lg border border-zinc-200 bg-white p-4 hover:border-amber-500"
+                className="block rounded-xl border border-zinc-200 bg-white p-5 hover:border-amber-500 hover:shadow-sm"
               >
-                <h3 className="font-medium">{e.title}</h3>
+                <h3 className="font-semibold">{e.title}</h3>
                 <p className="mt-1 text-sm text-zinc-600">
-                  {new Date(e.start_at).toLocaleString('zh-TW', { dateStyle: 'long', timeStyle: 'short' })}
+                  📅 {new Date(e.start_at).toLocaleString('zh-TW', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Taipei' })}
                 </p>
+                {e.location && <p className="text-sm text-zinc-600">📍 {e.location}</p>}
               </Link>
             ))}
           </div>
         </section>
       )}
 
-      <section id="about" className="mt-16 space-y-4 text-zinc-700">
-        <h2 className="text-xl font-semibold text-zinc-900">這場座談會的不同</h2>
+      <section id="about" className="mt-12 space-y-4 text-zinc-700">
+        <h2 className="text-xl font-semibold text-zinc-900">為什麼是群眾智慧而不是專家明牌</h2>
         <p>
-          當市場越熱，越多人只想問哪一檔會漲。但林博的獨立思維，看的不是那場最亮的煙火，而是那顆最可能、最快掉落的星星。
+          一個分析師的眼睛只看到一個角度，但 100 個人的觀察可以涵蓋市場 100 種訊號。
+          這場活動把每個人腦中的零碎拼圖匯集起來——有人發現籌碼異常、有人看到技術破壞、有人聽到產業傳言——
+          由 AI 把這些觀察結構化、去重、排序，呈現出全場的「集體共識」。
         </p>
         <p>
-          全場與會者透過手機即時提供觀察，AI 同時做兩件事：把訊息匯流給林博，並分析計算出每檔股票的下跌機率排行。這不是預測，而是群體智慧 + AI 計算 + 林博獨立判斷的三方共識。
+          這不是預測未來，而是<strong>把分散的市場訊號集中到一張桌子上看</strong>。
+          主持人不告訴您該買什麼，但會帶您看：當大家不約而同地擔心某檔股票時，那個擔心可能來自什麼。
         </p>
       </section>
     </main>
