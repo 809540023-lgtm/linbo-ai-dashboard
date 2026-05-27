@@ -66,8 +66,11 @@ export default function EventTabs(props: Props) {
       {tab === 'about' && (
         <section className="space-y-6">
           <header>
-            <p className="text-base font-medium text-amber-600">群眾智慧 × AI 共創座談會 · Pilot 場</p>
-            <h1 className="mt-2 text-4xl font-bold leading-tight text-zinc-900">{event.title}</h1>
+            <p className="text-base font-medium text-amber-600">林博 · 群眾智慧 × AI 共創座談會 · Pilot 場</p>
+            <h1 className="mt-2 text-4xl font-bold leading-tight text-zinc-900">
+              <span className="block text-2xl text-amber-700">林博 ·</span>
+              {event.title}
+            </h1>
             <p className="mt-4 text-lg leading-relaxed text-zinc-700">{event.description}</p>
           </header>
 
@@ -293,24 +296,104 @@ export default function EventTabs(props: Props) {
           </header>
 
           {myReg ? (
-            <div className="rounded-2xl border-4 border-green-400 bg-green-50 p-6">
-              <p className="text-3xl font-bold text-green-800">✅ 報名成功</p>
-              <p className="mt-3 text-xl text-green-900">
-                您是第 <strong className="text-5xl">{registeredCount}</strong> 位報名者
-              </p>
-              <p className="mt-4 text-lg text-green-900">
-                您選的票種：<strong>{myReg.ticket_type === 'online' ? `💻 線上直播票 NT$ ${onlinePrice}` : `🎫 現場票 NT$ ${onsitePriceNow}（當天結算）`}</strong>
-              </p>
-              <p className="mt-4 text-lg leading-relaxed text-green-700">
-                活動前 3 日會 Email 通知您詳細地點 / 線上連結與付款方式。當天 13:30 準時開始。
-              </p>
-              {myReg.referrer_name && (
-                <p className="mt-4 rounded-lg bg-white px-4 py-2 text-base text-green-700">
-                  推薦人：{myReg.referrer_name}
-                  {myReg.referrer_relation && ` · ${myReg.referrer_relation}`}
+            <>
+              <div className="rounded-2xl border-4 border-green-400 bg-green-50 p-6">
+                <p className="text-3xl font-bold text-green-800">✅ 您已報名成功</p>
+                <p className="mt-3 text-xl text-green-900">
+                  您是第 <strong className="text-5xl">{registeredCount}</strong> 位報名者
                 </p>
-              )}
-            </div>
+                <p className="mt-4 text-lg text-green-900">
+                  目前票種：<strong>{myReg.ticket_type === 'online' ? `💻 線上直播票 NT$ ${onlinePrice}` : `🎫 現場票 NT$ ${onsitePriceNow}（當天結算）`}</strong>
+                </p>
+                <p className="mt-4 text-lg leading-relaxed text-green-700">
+                  活動前 3 日會 Email 通知您詳細地點 / 線上連結與付款方式。當天 13:30 準時開始。
+                </p>
+              </div>
+
+              <form action={`/events/${eventId}/register`} method="POST" className="space-y-5 rounded-2xl border-2 border-amber-300 bg-amber-50 p-6">
+                <p className="rounded-lg bg-white px-4 py-3 text-base text-zinc-700">
+                  💡 以下是您的報名資訊，可以隨時修改後重新送出
+                </p>
+
+                <div>
+                  <label className="mb-3 block text-lg font-bold text-zinc-800">
+                    ① 選擇票種 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border-4 border-zinc-200 bg-white p-4 hover:border-amber-500">
+                      <input type="radio" name="ticket_type" value="onsite" required defaultChecked={myReg.ticket_type !== 'online'} className="mt-1.5 h-5 w-5" />
+                      <div>
+                        <p className="text-xl font-bold text-zinc-900">🎫 現場票</p>
+                        <p className="mt-1 text-lg font-semibold text-amber-700">NT$ {onsitePriceNow}</p>
+                        <p className="text-base text-zinc-500">當天結算 · 含咖啡 + 甜點</p>
+                      </div>
+                    </label>
+                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border-4 border-zinc-200 bg-white p-4 hover:border-amber-500">
+                      <input type="radio" name="ticket_type" value="online" required defaultChecked={myReg.ticket_type === 'online'} className="mt-1.5 h-5 w-5" />
+                      <div>
+                        <p className="text-xl font-bold text-zinc-900">💻 線上票</p>
+                        <p className="mt-1 text-lg font-semibold text-zinc-700">NT$ {onlinePrice}</p>
+                        <p className="text-base text-zinc-500">含 7 天回放</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-lg font-bold text-zinc-800">
+                    ② 推薦人姓名 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="referrer_name"
+                    required
+                    defaultValue={myReg.referrer_name || ''}
+                    placeholder="例：王小明"
+                    className="w-full rounded-xl border-2 border-zinc-300 bg-white px-4 py-3 text-lg focus:border-amber-500 focus:outline-none"
+                  />
+                  <p className="mt-2 text-base text-zinc-600">沒有推薦人？請在備註欄留言</p>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-lg font-bold text-zinc-800">③ 您與推薦人的關係</label>
+                  <select name="referrer_relation" defaultValue={myReg.referrer_relation || ''} className="w-full rounded-xl border-2 border-zinc-300 bg-white px-4 py-3 text-lg">
+                    <option value="">請選擇</option>
+                    <option>同事</option>
+                    <option>朋友</option>
+                    <option>家人</option>
+                    <option>客戶 / 合作夥伴</option>
+                    <option>投資 / 學習社團</option>
+                    <option>其他</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-lg font-bold text-zinc-800">④ 您的聯絡電話</label>
+                  <input
+                    name="attendee_phone"
+                    type="tel"
+                    defaultValue={myReg.attendee_phone || ''}
+                    placeholder="0912-345-678"
+                    className="w-full rounded-xl border-2 border-zinc-300 bg-white px-4 py-3 text-lg"
+                  />
+                  <p className="mt-2 text-base text-zinc-600">活動當天臨時聯繫用，僅工作人員可見</p>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-lg font-bold text-zinc-800">⑤ 想跟我們說的話（可空）</label>
+                  <textarea
+                    name="notes"
+                    rows={3}
+                    defaultValue={myReg.notes || ''}
+                    placeholder="飲食偏好、特殊需求、咖啡偏好（淺/中/深焙）..."
+                    className="w-full resize-none rounded-xl border-2 border-zinc-300 bg-white px-4 py-3 text-lg"
+                  />
+                </div>
+
+                <button className="w-full rounded-2xl bg-amber-600 px-6 py-5 text-2xl font-bold text-white shadow-lg hover:bg-amber-700">
+                  💾 更新報名資料
+                </button>
+              </form>
+            </>
           ) : isFull ? (
             <div className="rounded-2xl border-2 border-red-300 bg-red-50 p-6 text-center">
               <p className="text-2xl font-bold text-red-700">很抱歉，本場已額滿</p>
