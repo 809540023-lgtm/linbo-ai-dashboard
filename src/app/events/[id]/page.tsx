@@ -1,6 +1,45 @@
-// 活動詳情頁 + 報名表單（含票價系統）
+// 活動詳情頁 + 報名表單（含票價系統 + 精品咖啡 + 藍帶甜點）
 import Link from 'next/link'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+
+const COFFEES = [
+  {
+    no: '01',
+    name: '尼加拉瓜 · 秘境莊園 尖身波旁 蜜處理',
+    en: 'Nicaragua Mierisch · Finca Escondida · Laurina / Bourbon Pointu · Pulp Natural',
+    origin: '尼加拉瓜 希諾特加',
+    altitude: '1,000–1,250 m',
+    variety: '尖身波旁 Laurina（天然半低因品種）',
+    process: '蜜處理 Pulp Natural',
+    flavor: '柑橘、莓果、榛果、焦糖；葡萄柚 × 李子 × 橘汁，尾韻榛果威化餅',
+    story: 'Mierisch 家族屢獲 Cup of Excellence 殊榮，咖啡因僅一般咖啡的一半，極稀有品種。',
+    badge: '🌑 半低因',
+  },
+  {
+    no: '02',
+    name: '衣索比亞 · 卡法頂級 Wush Wush 水洗',
+    en: 'Ethiopia Keffa Top · Wush Wush · Washed',
+    origin: '衣索比亞 卡法 Keffa',
+    altitude: '1,600–1,760 m',
+    variety: 'Wush Wush（稀有原生種）',
+    process: '水洗 Washed',
+    flavor: '檸檬糖、黑醋栗、深色水果、紅茶、橘子；果香花香強烈，甜度極高',
+    story: '源自 Wush Wush 森林的原生種，風味近藝妓，產量稀少，近年精品圈明星豆。',
+    badge: '🌸 近藝妓',
+  },
+  {
+    no: '03',
+    name: '衣索比亞 · 夏娃 · 格林藝妓森林 日曬',
+    en: 'Ethiopia Eva · Gori Gesha Forest · Natural',
+    origin: '衣索比亞 Gori Gesha Forest',
+    altitude: '1,900–2,100 m',
+    variety: '100% Gori Gesha Forest 原生種',
+    process: '非洲床日曬 Natural',
+    flavor: '野薑花、檸檬柑橘、百花蜜甜感、香草迷迭香、伯爵茶、佛手柑，尾韻甘甜',
+    story: '藝妓品種發源地之一，完全野生未馴化，由周邊小農進森林手採，夢幻逸品。',
+    badge: '🦋 藝妓源頭',
+  },
+]
 
 export default async function EventDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient()
@@ -26,7 +65,6 @@ export default async function EventDetailPage({ params }: { params: { id: string
   const remaining = event.max_attendees ? Math.max(0, event.max_attendees - (registeredCount || 0)) : null
   const startDate = new Date(event.start_at)
 
-  // 現場票價動態計算：總成本 NT$ 20000 由現場人數分攤，介於 500-1000
   const onsiteN = onsiteCount || 0
   const onsitePriceNow = onsiteN === 0 ? 1000 : Math.max(500, Math.min(1000, Math.round(20000 / Math.max(onsiteN, 1))))
   const onlinePrice = 600
@@ -98,8 +136,8 @@ export default async function EventDetailPage({ params }: { params: { id: string
             <p className="mt-1 text-xs text-amber-700">當天現場參與 · 視人數分攤 NT$ 500–1,000</p>
             <ul className="mt-3 space-y-1 text-xs text-zinc-700">
               <li>✅ 現場互動體驗</li>
-              <li>☕ 含手沖精品咖啡</li>
-              <li>🍰 含當日精選甜點</li>
+              <li>☕ 含精品咖啡品鑑（3 支稀有莊園豆）</li>
+              <li>🍰 含藍帶精選甜點</li>
               <li>📺 含 7 天線上回放</li>
             </ul>
           </div>
@@ -118,6 +156,65 @@ export default async function EventDetailPage({ params }: { params: { id: string
         <p className="mt-3 text-xs text-zinc-500">
           現場票價依當天實際出席人數結算（總成本 NT$ 20,000 由現場人均分攤，上限 NT$ 1,000 / 下限 NT$ 500）。當天現場以現金或 LINE Pay 收取，線上票請於報名後 3 日內完成轉帳。
         </p>
+      </section>
+
+      {/* ☕ 精品咖啡品鑑會 */}
+      <section className="mt-6 rounded-xl border-2 border-amber-200 bg-gradient-to-b from-amber-50 to-white p-5">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">☕</span>
+          <div>
+            <h2 className="text-lg font-bold text-amber-900">精品咖啡品鑑會 · 限現場票</h2>
+            <p className="text-xs text-amber-700">Specialty Coffee Tasting · 三支稀有莊園豆</p>
+          </div>
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-zinc-700">
+          三種處理法 × 三支稀有品種 × 三種海拔層次。從圓潤甜潤的堅果焦糖，到明亮爆發的果香花香，再到細緻優雅的花茶尾韻——每一支豆子都有它的故事。
+        </p>
+
+        <div className="mt-4 space-y-3">
+          {COFFEES.map(c => (
+            <div key={c.no} className="rounded-lg border border-amber-200 bg-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium text-amber-600">{c.no} · {c.badge}</p>
+                  <h3 className="mt-1 text-sm font-bold text-zinc-900">{c.name}</h3>
+                  <p className="mt-0.5 text-xs italic text-zinc-500">{c.en}</p>
+                </div>
+              </div>
+              <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                <div><dt className="inline font-medium text-zinc-500">產區：</dt><dd className="inline text-zinc-800">{c.origin}</dd></div>
+                <div><dt className="inline font-medium text-zinc-500">海拔：</dt><dd className="inline text-zinc-800">{c.altitude}</dd></div>
+                <div className="col-span-2"><dt className="inline font-medium text-zinc-500">品種：</dt><dd className="inline text-zinc-800">{c.variety}</dd></div>
+                <div className="col-span-2"><dt className="inline font-medium text-zinc-500">處理法：</dt><dd className="inline text-zinc-800">{c.process}</dd></div>
+              </dl>
+              <p className="mt-2 rounded bg-amber-50 px-2 py-1.5 text-xs leading-relaxed text-amber-900">
+                <strong>♪ 風味：</strong>{c.flavor}
+              </p>
+              <p className="mt-1.5 text-xs leading-relaxed text-zinc-600">
+                <strong>❦ 故事：</strong>{c.story}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-4 text-xs text-zinc-500">
+          ── 三支豆同場品鑑，由 1,000m 漸進至 2,100m，體驗不同海拔孕育的風味個性 ──
+        </p>
+      </section>
+
+      {/* 🍰 藍帶甜點（資料待補） */}
+      <section className="mt-6 rounded-xl border-2 border-dashed border-pink-300 bg-pink-50 p-5">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🍰</span>
+          <div>
+            <h2 className="text-lg font-bold text-pink-900">藍帶精選甜點 · 限現場票</h2>
+            <p className="text-xs text-pink-700">Le Cordon Bleu Selected Pastries</p>
+          </div>
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-pink-900">
+          當日搭配三支精品咖啡的藍帶廚藝學院級甜點精選——詳細品項與風味說明將於活動前公布，敬請期待。
+        </p>
+        <p className="mt-2 text-xs italic text-pink-600">（甜點資料近日補上）</p>
       </section>
 
       {myReg ? (
@@ -168,7 +265,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
                   <div>
                     <p className="font-semibold text-zinc-900">🎫 現場票</p>
                     <p className="text-sm text-amber-700">NT$ {onsitePriceNow}（當天結算）</p>
-                    <p className="text-xs text-zinc-500">含咖啡 + 甜點</p>
+                    <p className="text-xs text-zinc-500">含咖啡品鑑 + 藍帶甜點</p>
                   </div>
                 </label>
                 <label className="flex cursor-pointer items-start gap-2 rounded-lg border-2 border-zinc-200 bg-white p-3 hover:border-amber-400">
@@ -225,7 +322,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
               <textarea
                 name="notes"
                 rows={2}
-                placeholder="飲食偏好、特殊需求、或您最想在現場聽到的問題..."
+                placeholder="飲食偏好、特殊需求、咖啡偏好（淺/中/深焙）..."
                 className="mt-1 w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2"
               />
             </div>
@@ -246,7 +343,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
           <li>🔮 <strong>不是報明牌、不是選股課</strong>——主持人不告訴您要買什麼</li>
           <li>👥 <strong>每個人都是貢獻者</strong>——您腦中的觀察就是現場的原料</li>
           <li>🤖 <strong>背後 15 個 AI 機器人輔助</strong>——把零碎觀察整合成排行榜，您不用懂 AI</li>
-          <li>📲 <strong>全程一鍵操作</strong>——手機打字送出觀察，剩下交給系統</li>
+          <li>☕ <strong>現場限定的精品咖啡品鑑</strong>——三支稀有莊園豆，配藍帶甜點</li>
           <li>🎯 <strong>共同發現轉弱訊號</strong>——不是預測，是群體智慧的即時呈現</li>
         </ul>
       </section>

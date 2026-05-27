@@ -25,10 +25,13 @@ export default async function HomePage() {
         </p>
         <div className="flex flex-wrap gap-3">
           <Link href="/auth/login" className="rounded-lg bg-zinc-900 px-6 py-3 font-medium text-white hover:bg-zinc-800">
-            立即報名（免費）
+            立即報名
           </Link>
           <Link href="/demo" className="rounded-lg bg-amber-500 px-6 py-3 font-medium text-white hover:bg-amber-600">
             🎬 看活動現場示範
+          </Link>
+          <Link href="/chat" className="rounded-lg border border-zinc-300 bg-white px-6 py-3 font-medium text-zinc-900 hover:border-amber-500">
+            💬 會員交流
           </Link>
         </div>
       </div>

@@ -1,4 +1,4 @@
-// 處理報名表單提交
+// 處理報名表單提交（含票種）
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -9,6 +9,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (!user) return NextResponse.redirect(`${origin}/auth/login?next=/events/${params.id}`, 303)
 
   const form = await req.formData()
+  const ticket_type = String(form.get('ticket_type') || 'onsite').trim()
   const referrer_name = String(form.get('referrer_name') || '').trim()
   const referrer_relation = String(form.get('referrer_relation') || '').trim() || null
   const attendee_phone = String(form.get('attendee_phone') || '').trim() || null
@@ -16,6 +17,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   if (!referrer_name) {
     return NextResponse.redirect(`${origin}/events/${params.id}?error=missing_referrer`, 303)
+  }
+  if (!['onsite', 'online'].includes(ticket_type)) {
+    return NextResponse.redirect(`${origin}/events/${params.id}?error=invalid_ticket`, 303)
   }
 
   // 檢查名額
@@ -28,9 +32,20 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
   }
 
+  // 票價計算（記錄報名當下的票價）
+  let price_quoted = 600 // 線上預設
+  if (ticket_type === 'onsite') {
+    const { count: onsiteN } = await admin.from('registrations')
+      .select('*', { count: 'exact', head: true }).eq('event_id', params.id).eq('ticket_type', 'onsite')
+    price_quoted = (onsiteN || 0) === 0 ? 1000 : Math.max(500, Math.min(1000, Math.round(20000 / Math.max((onsiteN || 0) + 1, 1))))
+  }
+
   await admin.from('registrations').upsert({
     event_id: params.id,
     user_id: user.id,
+    ticket_type,
+    price_quoted,
+    paid: false,
     referrer_name,
     referrer_relation,
     attendee_phone,
