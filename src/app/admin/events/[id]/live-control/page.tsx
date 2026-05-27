@@ -1,7 +1,8 @@
-// 活動現場控制面板：開始/結束、看即時統計、發佈公告
+// 活動現場控制面板：開始/結束、看即時統計、發佈公告、Mux 直播
 import Link from 'next/link'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
+import LiveControl from '@/components/live-control'
 
 export default async function LiveControlPage({ params }: { params: { id: string } }) {
   const supabase = createClient()
@@ -72,6 +73,11 @@ export default async function LiveControlPage({ params }: { params: { id: string
             }`}>ended</button>
           </form>
         </div>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="mb-3 text-lg font-semibold">📡 Mux 直播串流</h2>
+        <LiveControl eventId={event.id} />
       </section>
 
       <section className="mt-6 grid grid-cols-2 gap-4">
