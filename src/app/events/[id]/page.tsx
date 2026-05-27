@@ -1,4 +1,4 @@
-// 活動詳情頁 + 報名表單（社群共創定位、AI 小白友善）
+// 活動詳情頁 + 報名表單（含票價系統）
 import Link from 'next/link'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
@@ -12,6 +12,8 @@ export default async function EventDetailPage({ params }: { params: { id: string
 
   const { count: registeredCount } = await admin.from('registrations')
     .select('*', { count: 'exact', head: true }).eq('event_id', params.id)
+  const { count: onsiteCount } = await admin.from('registrations')
+    .select('*', { count: 'exact', head: true }).eq('event_id', params.id).eq('ticket_type', 'onsite')
 
   let myReg: any = null
   if (user) {
@@ -24,6 +26,11 @@ export default async function EventDetailPage({ params }: { params: { id: string
   const remaining = event.max_attendees ? Math.max(0, event.max_attendees - (registeredCount || 0)) : null
   const startDate = new Date(event.start_at)
 
+  // 現場票價動態計算：總成本 NT$ 20000 由現場人數分攤，介於 500-1000
+  const onsiteN = onsiteCount || 0
+  const onsitePriceNow = onsiteN === 0 ? 1000 : Math.max(500, Math.min(1000, Math.round(20000 / Math.max(onsiteN, 1))))
+  const onlinePrice = 600
+
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
       <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900">← 回首頁</Link>
@@ -34,7 +41,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
         <p className="mt-3 leading-relaxed text-zinc-700">{event.description}</p>
       </header>
 
-      {/* 玩法 3 步說明（AI 小白友善） */}
+      {/* 玩法 3 步說明 */}
       <section className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5">
         <h2 className="text-sm font-bold text-amber-900">活動現場您只要做 3 件事</h2>
         <div className="mt-3 space-y-2 text-sm text-amber-900">
@@ -43,7 +50,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
           <div className="flex gap-2"><span className="font-bold">3️⃣</span><p>看 AI 把全場 N 個人的觀察整合成排行榜</p></div>
         </div>
         <p className="mt-3 text-xs text-amber-800">
-          完全不懂 AI、不懂股票分析都沒關係——後端 15 個 AI 機器人會做所有困難的工作，您只需要分享您腦中的想法。
+          完全不懂 AI、不懂股票分析都沒關係——後端 15 個 AI 機器人會做所有困難的工作。
         </p>
       </section>
 
@@ -81,14 +88,49 @@ export default async function EventDetailPage({ params }: { params: { id: string
         </div>
       </section>
 
+      {/* 票價說明卡 */}
+      <section className="mt-6 rounded-xl border-2 border-amber-300 bg-white p-5">
+        <h2 className="text-base font-bold text-zinc-900">💰 票種與費用</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4">
+            <p className="text-xs font-medium text-amber-700">🎫 現場票</p>
+            <p className="mt-1 text-3xl font-bold text-amber-900">NT$ {onsitePriceNow}</p>
+            <p className="mt-1 text-xs text-amber-700">當天現場參與 · 視人數分攤 NT$ 500–1,000</p>
+            <ul className="mt-3 space-y-1 text-xs text-zinc-700">
+              <li>✅ 現場互動體驗</li>
+              <li>☕ 含手沖精品咖啡</li>
+              <li>🍰 含當日精選甜點</li>
+              <li>📺 含 7 天線上回放</li>
+            </ul>
+          </div>
+          <div className="rounded-lg border-2 border-zinc-300 bg-zinc-50 p-4">
+            <p className="text-xs font-medium text-zinc-600">💻 線上直播票</p>
+            <p className="mt-1 text-3xl font-bold text-zinc-900">NT$ {onlinePrice}</p>
+            <p className="mt-1 text-xs text-zinc-600">遠端參與 · 固定費用</p>
+            <ul className="mt-3 space-y-1 text-xs text-zinc-700">
+              <li>📱 手機 / 電腦觀看直播</li>
+              <li>💬 同步打字送出觀察</li>
+              <li>📺 含 7 天線上回放</li>
+              <li>📊 含 AI 個人化報告</li>
+            </ul>
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-zinc-500">
+          現場票價依當天實際出席人數結算（總成本 NT$ 20,000 由現場人均分攤，上限 NT$ 1,000 / 下限 NT$ 500）。當天現場以現金或 LINE Pay 收取，線上票請於報名後 3 日內完成轉帳。
+        </p>
+      </section>
+
       {myReg ? (
         <section className="mt-6 rounded-xl border-2 border-green-400 bg-green-50 p-5">
           <p className="text-lg font-bold text-green-800">✅ 報名成功</p>
           <p className="mt-2 text-base text-green-900">
             您是第 <strong className="text-3xl">{registeredCount}</strong> 位報名者
           </p>
+          <p className="mt-2 text-sm text-green-900">
+            票種：<strong>{myReg.ticket_type === 'online' ? `💻 線上直播票 NT$ ${onlinePrice}` : `🎫 現場票 NT$ ${onsitePriceNow}（當天結算）`}</strong>
+          </p>
           <p className="mt-2 text-sm text-green-700">
-            活動前 3 日會 Email 通知您詳細地點。當天 13:30 準時開始，請提早 10 分鐘到場領取胸貼名牌。
+            活動前 3 日會 Email 通知您詳細地點 / 線上連結與付款方式。當天 13:30 準時開始。
           </p>
           {myReg.referrer_name && (
             <p className="mt-3 rounded bg-white px-2 py-1 text-xs text-green-700">
@@ -112,10 +154,34 @@ export default async function EventDetailPage({ params }: { params: { id: string
         </section>
       ) : (
         <section className="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-5">
-          <h2 className="text-lg font-semibold text-amber-900">立即報名（免費）</h2>
+          <h2 className="text-lg font-semibold text-amber-900">立即報名</h2>
           <p className="mt-1 text-sm text-amber-700">Pilot 場限熟人推薦——確保現場品質、避免廣告帳號混入</p>
 
           <form action={`/events/${params.id}/register`} method="POST" className="mt-4 space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-zinc-700">
+                選擇票種 <span className="text-red-500">*</span>
+              </label>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <label className="flex cursor-pointer items-start gap-2 rounded-lg border-2 border-zinc-200 bg-white p-3 hover:border-amber-400">
+                  <input type="radio" name="ticket_type" value="onsite" required defaultChecked className="mt-1" />
+                  <div>
+                    <p className="font-semibold text-zinc-900">🎫 現場票</p>
+                    <p className="text-sm text-amber-700">NT$ {onsitePriceNow}（當天結算）</p>
+                    <p className="text-xs text-zinc-500">含咖啡 + 甜點</p>
+                  </div>
+                </label>
+                <label className="flex cursor-pointer items-start gap-2 rounded-lg border-2 border-zinc-200 bg-white p-3 hover:border-amber-400">
+                  <input type="radio" name="ticket_type" value="online" required className="mt-1" />
+                  <div>
+                    <p className="font-semibold text-zinc-900">💻 線上票</p>
+                    <p className="text-sm text-zinc-700">NT$ {onlinePrice}</p>
+                    <p className="text-xs text-zinc-500">含 7 天回放</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-zinc-700">
                 推薦人姓名 <span className="text-red-500">*</span>
@@ -126,7 +192,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
                 placeholder="誰介紹您來的？例：王小明"
                 className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2"
               />
-              <p className="mt-1 text-xs text-zinc-500">沒有推薦人？請在備註欄留言，我們會回覆您</p>
+              <p className="mt-1 text-xs text-zinc-500">沒有推薦人？請在備註欄留言</p>
             </div>
 
             <div>
@@ -165,7 +231,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
             </div>
 
             <button className="w-full rounded-lg bg-amber-600 px-4 py-3 font-medium text-white hover:bg-amber-700">
-              ✅ 確認報名（免費）
+              ✅ 確認報名
             </button>
             <p className="text-center text-xs text-zinc-500">
               本平台為教學交流性質，所有內容不構成任何投資建議。
