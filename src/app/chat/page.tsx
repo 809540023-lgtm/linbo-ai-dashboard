@@ -58,7 +58,7 @@ export default async function ChatPage() {
       <ChatRoom
         currentUserId={user.id}
         currentUserName={me?.display_name || user.email?.split('@')[0] || '匿名'}
-        initialMessages={(messages || []).reverse()}
+        initialMessages={((messages || []) as any[]).reverse()}
       />
 
       <p className="mt-2 text-center text-xs text-zinc-400">

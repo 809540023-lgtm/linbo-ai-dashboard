@@ -2,12 +2,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+type Profile = { display_name?: string | null; avatar_url?: string | null }
 type Msg = {
   id: string
   user_id: string
   body: string
   created_at: string
-  profiles?: { display_name?: string | null; avatar_url?: string | null } | null
+  profiles?: Profile | Profile[] | null
+}
+
+function getProfile(p: Msg['profiles']): Profile | null {
+  if (!p) return null
+  if (Array.isArray(p)) return p[0] || null
+  return p
 }
 
 export default function ChatRoom({
@@ -97,7 +104,7 @@ export default function ChatRoom({
         ) : (
           messages.map(m => {
             const mine = m.user_id === currentUserId
-            const name = m.profiles?.display_name || '會員'
+            const name = getProfile(m.profiles)?.display_name || '會員'
             return (
               <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${mine ? 'bg-amber-500 text-white' : 'bg-white border border-zinc-200 text-zinc-900'}`}>
