@@ -1,0 +1,412 @@
+'use client'
+import { useState } from 'react'
+import Link from 'next/link'
+
+type Coffee = {
+  no: string
+  name: string
+  en: string
+  origin: string
+  altitude: string
+  variety: string
+  process: string
+  flavor: string
+  story: string
+  badge: string
+}
+
+type Props = {
+  event: any
+  registeredCount: number
+  remaining: number | null
+  isFull: boolean
+  myReg: any
+  user: any
+  onsitePriceNow: number
+  onlinePrice: number
+  coffees: Coffee[]
+  startDateStr: string
+  eventId: string
+}
+
+const TABS = [
+  { id: 'about', label: '🎯 活動介紹', emoji: '🎯' },
+  { id: 'price', label: '💰 票價說明', emoji: '💰' },
+  { id: 'coffee', label: '☕ 咖啡品鑑', emoji: '☕' },
+  { id: 'register', label: '📝 立即報名', emoji: '📝' },
+] as const
+
+type TabId = typeof TABS[number]['id']
+
+export default function EventTabs(props: Props) {
+  const { event, registeredCount, remaining, isFull, myReg, user, onsitePriceNow, onlinePrice, coffees, startDateStr, eventId } = props
+  const [tab, setTab] = useState<TabId>(myReg ? 'register' : 'about')
+
+  return (
+    <div>
+      {/* Tab Nav — 大顆好按 */}
+      <nav className="sticky top-0 z-10 -mx-2 mb-6 grid grid-cols-4 gap-1 rounded-2xl bg-zinc-100 p-1.5 shadow-sm">
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`rounded-xl px-2 py-3 text-base font-semibold transition ${
+              tab === t.id
+                ? 'bg-amber-600 text-white shadow-md'
+                : 'text-zinc-700 hover:bg-white'
+            }`}
+          >
+            <span className="text-2xl">{t.emoji}</span>
+            <span className="ml-1 hidden sm:inline">{t.label.replace(/^\S+\s/, '')}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* === Tab 1：活動介紹 === */}
+      {tab === 'about' && (
+        <section className="space-y-6">
+          <header>
+            <p className="text-base font-medium text-amber-600">群眾智慧 × AI 共創座談會 · Pilot 場</p>
+            <h1 className="mt-2 text-4xl font-bold leading-tight text-zinc-900">{event.title}</h1>
+            <p className="mt-4 text-lg leading-relaxed text-zinc-700">{event.description}</p>
+          </header>
+
+          {/* 3 步驟玩法 */}
+          <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-6">
+            <h2 className="text-2xl font-bold text-amber-900">活動現場您只要做 3 件事</h2>
+            <ol className="mt-5 space-y-4">
+              <li className="flex items-start gap-4">
+                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-600 text-2xl font-bold text-white">1</span>
+                <div>
+                  <p className="text-xl font-bold text-amber-900">看您手機上的直播</p>
+                  <p className="mt-1 text-base text-zinc-700">手機網頁打開就能看主持人</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-4">
+                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-600 text-2xl font-bold text-white">2</span>
+                <div>
+                  <p className="text-xl font-bold text-amber-900">分享您的觀察</p>
+                  <p className="mt-1 text-base text-zinc-700">把「覺得可能會跌的觀察」打字送出（一句話就好）</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-4">
+                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-600 text-2xl font-bold text-white">3</span>
+                <div>
+                  <p className="text-xl font-bold text-amber-900">看 AI 即時整合</p>
+                  <p className="mt-1 text-base text-zinc-700">AI 把全場 N 個人的觀察整合成排行榜</p>
+                </div>
+              </li>
+            </ol>
+            <p className="mt-5 rounded-xl bg-white p-4 text-base leading-relaxed text-amber-900">
+              <strong>完全不懂 AI、不懂股票分析都沒關係——</strong>
+              後端 15 個 AI 機器人會做所有困難的工作，您只需要分享您腦中的想法。
+            </p>
+          </div>
+
+          {/* 活動資訊 */}
+          <div className="space-y-4 rounded-2xl border-2 border-zinc-200 bg-white p-6">
+            <div className="flex items-start gap-4">
+              <span className="text-3xl">📅</span>
+              <div>
+                <p className="text-base font-medium text-zinc-500">日期時間</p>
+                <p className="mt-1 text-2xl font-bold text-zinc-900">{startDateStr}</p>
+                <p className="mt-1 text-base text-zinc-600">活動全長約 3.5 小時</p>
+              </div>
+            </div>
+            {event.location && (
+              <div className="flex items-start gap-4 border-t border-zinc-100 pt-4">
+                <span className="text-3xl">📍</span>
+                <div>
+                  <p className="text-base font-medium text-zinc-500">地點</p>
+                  <p className="mt-1 text-xl leading-relaxed text-zinc-900">{event.location}</p>
+                </div>
+              </div>
+            )}
+            <div className="flex items-start gap-4 border-t border-zinc-100 pt-4">
+              <span className="text-3xl">👥</span>
+              <div>
+                <p className="text-base font-medium text-zinc-500">名額</p>
+                <p className="mt-1 text-xl text-zinc-900">
+                  已報名 <strong className="text-3xl text-amber-700">{registeredCount}</strong> /{' '}
+                  {event.max_attendees || '不限'} 人
+                </p>
+                {remaining !== null && remaining > 0 && (
+                  <p className="mt-1 text-base text-zinc-600">還剩 {remaining} 席</p>
+                )}
+                {isFull && <span className="mt-2 inline-block rounded bg-red-100 px-3 py-1 text-base text-red-700">已額滿</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* 為什麼不一樣 */}
+          <div className="rounded-2xl bg-zinc-50 p-6">
+            <h2 className="text-2xl font-bold text-zinc-900">這場活動為什麼跟別人不一樣</h2>
+            <ul className="mt-4 space-y-3 text-lg leading-relaxed text-zinc-700">
+              <li>🔮 <strong>不是報明牌、不是選股課</strong>——主持人不告訴您要買什麼</li>
+              <li>👥 <strong>每個人都是貢獻者</strong>——您腦中的觀察就是現場的原料</li>
+              <li>🤖 <strong>背後 15 個 AI 機器人輔助</strong>——把零碎觀察整合成排行榜</li>
+              <li>☕ <strong>現場限定的精品咖啡品鑑</strong>——三支稀有莊園豆，配藍帶甜點</li>
+              <li>🎯 <strong>共同發現轉弱訊號</strong>——不是預測，是群體智慧的即時呈現</li>
+            </ul>
+          </div>
+
+          <button
+            onClick={() => setTab('register')}
+            className="w-full rounded-2xl bg-amber-600 px-6 py-5 text-2xl font-bold text-white shadow-lg hover:bg-amber-700"
+          >
+            👉 我要報名（下一步）
+          </button>
+        </section>
+      )}
+
+      {/* === Tab 2：票價說明 === */}
+      {tab === 'price' && (
+        <section className="space-y-6">
+          <header>
+            <h2 className="text-3xl font-bold text-zinc-900">💰 票種與費用</h2>
+            <p className="mt-2 text-lg text-zinc-600">選一個適合您的方式</p>
+          </header>
+
+          {/* 現場票 */}
+          <div className="rounded-2xl border-4 border-amber-400 bg-amber-50 p-6 shadow-md">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">🎫</span>
+              <div>
+                <p className="text-base font-medium text-amber-700">現場票（最推薦）</p>
+                <p className="text-4xl font-bold text-amber-900">NT$ {onsitePriceNow}</p>
+              </div>
+            </div>
+            <p className="mt-3 rounded-lg bg-white px-3 py-2 text-base text-amber-900">
+              當天視人數分攤 NT$ 500 ~ NT$ 1,000，當天現場結算
+            </p>
+            <ul className="mt-4 space-y-2 text-lg leading-relaxed text-zinc-800">
+              <li>✅ 現場互動體驗</li>
+              <li>☕ <strong>含精品咖啡品鑑</strong>（3 支稀有莊園豆）</li>
+              <li>🍰 含藍帶精選甜點</li>
+              <li>📺 含 7 天線上回放</li>
+            </ul>
+          </div>
+
+          {/* 線上票 */}
+          <div className="rounded-2xl border-2 border-zinc-300 bg-white p-6">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">💻</span>
+              <div>
+                <p className="text-base font-medium text-zinc-600">線上直播票</p>
+                <p className="text-4xl font-bold text-zinc-900">NT$ {onlinePrice}</p>
+              </div>
+            </div>
+            <p className="mt-3 rounded-lg bg-zinc-50 px-3 py-2 text-base text-zinc-700">
+              遠端參與 · 固定費用
+            </p>
+            <ul className="mt-4 space-y-2 text-lg leading-relaxed text-zinc-800">
+              <li>📱 手機 / 電腦觀看直播</li>
+              <li>💬 同步打字送出觀察</li>
+              <li>📺 含 7 天線上回放</li>
+              <li>📊 含 AI 個人化報告</li>
+            </ul>
+          </div>
+
+          <div className="rounded-xl bg-zinc-50 p-5">
+            <p className="text-base leading-relaxed text-zinc-700">
+              💡 <strong>說明：</strong>現場票價依當天實際出席人數結算（總成本 NT$ 20,000 由現場人均分攤，上限 NT$ 1,000、下限 NT$ 500）。當天現場以現金或 LINE Pay 收取；線上票請於報名後 3 日內完成轉帳。
+            </p>
+          </div>
+
+          <button
+            onClick={() => setTab('coffee')}
+            className="w-full rounded-2xl bg-amber-600 px-6 py-5 text-2xl font-bold text-white shadow-lg hover:bg-amber-700"
+          >
+            👉 看現場限定的咖啡（下一步）
+          </button>
+        </section>
+      )}
+
+      {/* === Tab 3：咖啡品鑑 === */}
+      {tab === 'coffee' && (
+        <section className="space-y-6">
+          <header>
+            <h2 className="text-3xl font-bold text-zinc-900">☕ 精品咖啡品鑑會</h2>
+            <p className="mt-2 text-lg text-amber-700">Specialty Coffee Tasting · 現場限定</p>
+            <p className="mt-3 text-lg leading-relaxed text-zinc-700">
+              三支稀有莊園豆 · 三種處理法 × 三支稀有品種 × 三種海拔層次
+            </p>
+          </header>
+
+          <div className="space-y-5">
+            {coffees.map(c => (
+              <div key={c.no} className="rounded-2xl border-2 border-amber-200 bg-white p-5 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-2xl font-bold text-amber-800">{c.no}</span>
+                  <div>
+                    <p className="text-sm font-medium text-amber-600">{c.badge}</p>
+                    <h3 className="text-xl font-bold text-zinc-900">{c.name}</h3>
+                    <p className="mt-1 text-sm italic text-zinc-500">{c.en}</p>
+                  </div>
+                </div>
+                <dl className="mt-4 grid gap-y-2 text-base">
+                  <div><dt className="inline font-medium text-zinc-500">產區：</dt><dd className="inline text-zinc-800">{c.origin}</dd></div>
+                  <div><dt className="inline font-medium text-zinc-500">海拔：</dt><dd className="inline text-zinc-800">{c.altitude}</dd></div>
+                  <div><dt className="inline font-medium text-zinc-500">品種：</dt><dd className="inline text-zinc-800">{c.variety}</dd></div>
+                  <div><dt className="inline font-medium text-zinc-500">處理法：</dt><dd className="inline text-zinc-800">{c.process}</dd></div>
+                </dl>
+                <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-base leading-relaxed text-amber-900">
+                  <strong>♪ 風味：</strong>{c.flavor}
+                </p>
+                <p className="mt-2 text-base leading-relaxed text-zinc-600">
+                  <strong>❦ 故事：</strong>{c.story}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* 藍帶甜點 */}
+          <div className="rounded-2xl border-4 border-dashed border-pink-300 bg-pink-50 p-6">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">🍰</span>
+              <div>
+                <h3 className="text-2xl font-bold text-pink-900">藍帶精選甜點</h3>
+                <p className="text-sm text-pink-700">Le Cordon Bleu Selected Pastries</p>
+              </div>
+            </div>
+            <p className="mt-4 text-lg leading-relaxed text-pink-900">
+              當日搭配三支精品咖啡的藍帶廚藝學院級甜點精選——詳細品項與風味說明將於活動前公布，敬請期待。
+            </p>
+            <p className="mt-3 text-base italic text-pink-600">（甜點資料近日補上）</p>
+          </div>
+
+          <button
+            onClick={() => setTab('register')}
+            className="w-full rounded-2xl bg-amber-600 px-6 py-5 text-2xl font-bold text-white shadow-lg hover:bg-amber-700"
+          >
+            👉 我要報名（最後一步）
+          </button>
+        </section>
+      )}
+
+      {/* === Tab 4：立即報名 === */}
+      {tab === 'register' && (
+        <section className="space-y-6">
+          <header>
+            <h2 className="text-3xl font-bold text-zinc-900">📝 立即報名</h2>
+            <p className="mt-2 text-lg text-amber-700">Pilot 場限熟人推薦——確保現場品質</p>
+          </header>
+
+          {myReg ? (
+            <div className="rounded-2xl border-4 border-green-400 bg-green-50 p-6">
+              <p className="text-3xl font-bold text-green-800">✅ 報名成功</p>
+              <p className="mt-3 text-xl text-green-900">
+                您是第 <strong className="text-5xl">{registeredCount}</strong> 位報名者
+              </p>
+              <p className="mt-4 text-lg text-green-900">
+                您選的票種：<strong>{myReg.ticket_type === 'online' ? `💻 線上直播票 NT$ ${onlinePrice}` : `🎫 現場票 NT$ ${onsitePriceNow}（當天結算）`}</strong>
+              </p>
+              <p className="mt-4 text-lg leading-relaxed text-green-700">
+                活動前 3 日會 Email 通知您詳細地點 / 線上連結與付款方式。當天 13:30 準時開始。
+              </p>
+              {myReg.referrer_name && (
+                <p className="mt-4 rounded-lg bg-white px-4 py-2 text-base text-green-700">
+                  推薦人：{myReg.referrer_name}
+                  {myReg.referrer_relation && ` · ${myReg.referrer_relation}`}
+                </p>
+              )}
+            </div>
+          ) : isFull ? (
+            <div className="rounded-2xl border-2 border-red-300 bg-red-50 p-6 text-center">
+              <p className="text-2xl font-bold text-red-700">很抱歉，本場已額滿</p>
+              <p className="mt-2 text-lg text-red-600">下一場將於 6 月中旬開放，請關注後續通知</p>
+            </div>
+          ) : !user ? (
+            <div className="rounded-2xl border-2 border-zinc-200 bg-white p-6 text-center">
+              <p className="mb-5 text-xl text-zinc-700">先登入再報名 · 用 Google 一鍵登入最快</p>
+              <Link href={`/auth/login?next=/events/${eventId}`}
+                className="inline-block rounded-2xl bg-zinc-900 px-8 py-4 text-xl font-bold text-white hover:bg-zinc-800">
+                登入 / 註冊
+              </Link>
+            </div>
+          ) : (
+            <form action={`/events/${eventId}/register`} method="POST" className="space-y-5 rounded-2xl border-2 border-amber-300 bg-amber-50 p-6">
+              <div>
+                <label className="mb-3 block text-lg font-bold text-zinc-800">
+                  ① 選擇票種 <span className="text-red-500">*</span>
+                </label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border-4 border-zinc-200 bg-white p-4 hover:border-amber-500">
+                    <input type="radio" name="ticket_type" value="onsite" required defaultChecked className="mt-1.5 h-5 w-5" />
+                    <div>
+                      <p className="text-xl font-bold text-zinc-900">🎫 現場票</p>
+                      <p className="mt-1 text-lg font-semibold text-amber-700">NT$ {onsitePriceNow}</p>
+                      <p className="text-base text-zinc-500">當天結算 · 含咖啡 + 甜點</p>
+                    </div>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border-4 border-zinc-200 bg-white p-4 hover:border-amber-500">
+                    <input type="radio" name="ticket_type" value="online" required className="mt-1.5 h-5 w-5" />
+                    <div>
+                      <p className="text-xl font-bold text-zinc-900">💻 線上票</p>
+                      <p className="mt-1 text-lg font-semibold text-zinc-700">NT$ {onlinePrice}</p>
+                      <p className="text-base text-zinc-500">含 7 天回放</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-lg font-bold text-zinc-800">
+                  ② 推薦人姓名 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="referrer_name"
+                  required
+                  placeholder="例：王小明"
+                  className="w-full rounded-xl border-2 border-zinc-300 bg-white px-4 py-3 text-lg focus:border-amber-500 focus:outline-none"
+                />
+                <p className="mt-2 text-base text-zinc-600">沒有推薦人？請在備註欄留言</p>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-lg font-bold text-zinc-800">③ 您與推薦人的關係</label>
+                <select name="referrer_relation" className="w-full rounded-xl border-2 border-zinc-300 bg-white px-4 py-3 text-lg">
+                  <option value="">請選擇</option>
+                  <option>同事</option>
+                  <option>朋友</option>
+                  <option>家人</option>
+                  <option>客戶 / 合作夥伴</option>
+                  <option>投資 / 學習社團</option>
+                  <option>其他</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-lg font-bold text-zinc-800">④ 您的聯絡電話</label>
+                <input
+                  name="attendee_phone"
+                  type="tel"
+                  placeholder="0912-345-678"
+                  className="w-full rounded-xl border-2 border-zinc-300 bg-white px-4 py-3 text-lg"
+                />
+                <p className="mt-2 text-base text-zinc-600">活動當天臨時聯繫用，僅工作人員可見</p>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-lg font-bold text-zinc-800">⑤ 想跟我們說的話（可空）</label>
+                <textarea
+                  name="notes"
+                  rows={3}
+                  placeholder="飲食偏好、特殊需求、咖啡偏好（淺/中/深焙）..."
+                  className="w-full resize-none rounded-xl border-2 border-zinc-300 bg-white px-4 py-3 text-lg"
+                />
+              </div>
+
+              <button className="w-full rounded-2xl bg-amber-600 px-6 py-5 text-2xl font-bold text-white shadow-lg hover:bg-amber-700">
+                ✅ 確認報名
+              </button>
+              <p className="text-center text-base text-zinc-600">
+                本平台為教學交流性質，所有內容不構成任何投資建議。
+              </p>
+            </form>
+          )}
+        </section>
+      )}
+    </div>
+  )
+}
