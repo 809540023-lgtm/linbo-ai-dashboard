@@ -2,10 +2,18 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+function getPublicOrigin(req: Request): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host')
+  const proto = req.headers.get('x-forwarded-proto') || 'https'
+  if (host) return `${proto}://${host}`
+  return new URL(req.url).origin
+}
+
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { origin } = new URL(req.url)
+  const origin = getPublicOrigin(req)
   if (!user) return NextResponse.redirect(`${origin}/auth/login?next=/events/${params.id}`, 303)
 
   const form = await req.formData()
