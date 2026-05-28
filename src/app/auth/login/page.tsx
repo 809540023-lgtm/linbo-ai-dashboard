@@ -1,9 +1,13 @@
 'use client'
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const supabase = createClient()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next') || '/dashboard'
+
   const [tab, setTab] = useState<'google' | 'phone'>('google')
   const [phone, setPhone] = useState('+886')
   const [code, setCode] = useState('')
@@ -11,7 +15,6 @@ export default function LoginPage() {
   const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // 自動把台灣本地號 09xxxxxxxx 轉成 +8869xxxxxxxx
   function normalizePhone(input: string): string {
     let v = input.trim().replace(/[\s-()]/g, '')
     if (!v) return ''
@@ -23,9 +26,11 @@ export default function LoginPage() {
 
   async function loginWithGoogle() {
     setLoading(true)
+    // 注意：要回到 /auth/callback 才會交換 session + 跳到 next
+    const callbackUrl = `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${location.origin}/dashboard` },
+      options: { redirectTo: callbackUrl },
     })
   }
 
@@ -48,12 +53,17 @@ export default function LoginPage() {
     const { error } = await supabase.auth.verifyOtp({ phone: normalizePhone(phone), token: code, type: 'sms' })
     setLoading(false)
     if (error) { setMsg(error.message); return }
-    location.href = '/dashboard'
+    location.href = next
   }
 
   return (
     <main className="mx-auto max-w-md px-6 py-16">
-      <h1 className="mb-8 text-2xl font-bold">登入 / 註冊</h1>
+      <h1 className="mb-2 text-2xl font-bold">登入 / 註冊</h1>
+      {next !== '/dashboard' && (
+        <p className="mb-6 rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-800">
+          登入完成後會自動回到您剛剛的頁面繼續報名
+        </p>
+      )}
 
       <div className="mb-6 flex gap-2 rounded-lg bg-zinc-100 p-1">
         <button
