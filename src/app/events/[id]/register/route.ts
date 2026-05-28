@@ -1,5 +1,6 @@
 // 處理報名表單提交（含票種 + LINE ID）
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { sendRegistrationConfirmation } from '@/lib/email'
 import { NextResponse } from 'next/server'
 
 function getPublicOrigin(req: Request): string {
@@ -32,7 +33,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 
   const admin = createAdminClient()
-  const { data: event } = await admin.from('events').select('max_attendees').eq('id', params.id).single()
+  const { data: event } = await admin
+    .from('events')
+    .select('title, start_at, location, max_attendees')
+    .eq('id', params.id)
+    .single()
   if (event?.max_attendees) {
     const { count } = await admin.from('registrations').select('*', { count: 'exact', head: true }).eq('event_id', params.id)
     if ((count || 0) >= event.max_attendees) {
@@ -47,6 +52,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     price_quoted = (onsiteN || 0) === 0 ? 1000 : Math.max(500, Math.min(1000, Math.round(20000 / Math.max((onsiteN || 0) + 1, 1))))
   }
 
+  // 判斷是不是「新報名」（重複報名/編輯就不再寄確認信）
+  const { data: existing } = await admin
+    .from('registrations')
+    .select('id')
+    .eq('event_id', params.id)
+    .eq('user_id', user.id)
+    .maybeSingle()
+  const isNewRegistration = !existing
+
   await admin.from('registrations').upsert({
     event_id: params.id,
     user_id: user.id,
@@ -59,6 +73,33 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     line_id,
     notes,
   }, { onConflict: 'event_id,user_id' })
+
+  // 報名確認信（第一次報名才寄）— 失敗不擋報名流程
+  if (isNewRegistration && user.email && event) {
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .maybeSingle()
+    try {
+      await sendRegistrationConfirmation({
+        toEmail: user.email,
+        toName: profile?.display_name || null,
+        eventTitle: event.title,
+        eventStartAt: event.start_at,
+        eventLocation: event.location,
+        ticketType: ticket_type as 'onsite' | 'online',
+        priceQuoted: price_quoted,
+        referrerName: referrer_name,
+        lineId: line_id,
+        attendeePhone: attendee_phone,
+        notes,
+        eventUrl: `${origin}/events/${params.id}`,
+      })
+    } catch (e) {
+      console.error('[register] confirmation email failed:', e)
+    }
+  }
 
   return NextResponse.redirect(`${origin}/events/${params.id}?success=1`, 303)
 }
